@@ -10,16 +10,12 @@ import (
 func Inject(e *echo.Echo, db *gorm.DB) {
 	authService := auth.NewService(db, auth.NewJWTFactory(viper.GetString("SECRET")))
 
-	e.GET("/hello", func(c echo.Context) error {
-		body := new(RegisterPayload)
-		if err := c.Bind(body); err != nil {
-			return err
-		}
-		return c.String(200, "Hello, world!")
-	})
-
 	e.POST("/auth/register", func(c echo.Context) error {
-		body := new(RegisterPayload)
+		body := new(struct {
+			Email    string `json:"email"`
+			Name     string `json:"name"`
+			Password string `json:"password"`
+		})
 		if err := c.Bind(body); err != nil {
 			return err
 		}
@@ -27,10 +23,13 @@ func Inject(e *echo.Echo, db *gorm.DB) {
 		if err != nil {
 			return err
 		}
-		return c.JSON(200, echo.Map{"ok": "ok!"})
+		return c.JSON(200, echo.Map{"status": "ok"})
 	})
 	e.POST("/auth/login", func(c echo.Context) error {
-		body := new(LoginPayload)
+		body := new(struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		})
 		if err := c.Bind(body); err != nil {
 			return err
 		}
@@ -40,6 +39,23 @@ func Inject(e *echo.Echo, db *gorm.DB) {
 		}
 
 		return c.JSON(200, pair)
+	})
+
+	e.POST("/auth/change-password", func(c echo.Context) error {
+		body := new(struct {
+			Email       string `json:"email"`
+			OldPassword string `json:"old_password"`
+			NewPassword string `json:"new_password"`
+		})
+		if err := c.Bind(body); err != nil {
+			return err
+		}
+		err := authService.ChangePassword(body.Email, body.NewPassword, body.OldPassword)
+		if err != nil {
+			return err
+		}
+
+		return c.JSON(200, echo.Map{"status": "ok"})
 	})
 
 	e.POST("/auth/refresh", func(c echo.Context) error {

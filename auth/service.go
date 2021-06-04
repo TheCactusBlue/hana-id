@@ -49,7 +49,7 @@ func (s *Service) Register(email, name, password string) error {
 }
 
 func (s *Service) Refresh(refreshToken string) (*AccessRefreshPair, error) {
-	decoded, err := model.DecodeRefresh(refreshToken)
+	decoded, err := RestoreHashToken(refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -75,6 +75,18 @@ func (s *Service) Refresh(refreshToken string) (*AccessRefreshPair, error) {
 	}, nil
 }
 
+func (s *Service) findByEmailOrName(emailOrName string) (*model.User, error) {
+	cond := "name = ?"
+	if strings.Contains(emailOrName, "@") {
+		cond = "email = ?"
+	}
+	user := new(model.User)
+	if err := s.db.First(user, cond, emailOrName).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (s *Service) Login(email, password string) (*AccessRefreshPair, error) {
 	user := new(model.User)
 	err := s.db.First(user, "email = ?", email).Error
@@ -96,4 +108,20 @@ func (s *Service) Login(email, password string) (*AccessRefreshPair, error) {
 		AccessToken:  jwt,
 		RefreshToken: refresh,
 	}, nil
+}
+
+func (s *Service) ChangePassword(email, oldPassword, newPassword string) error {
+	user := new(model.User)
+	err := s.db.First(user, "email = ?", email).Error
+	if err != nil {
+		return err
+	}
+	if err := user.CheckPassword(oldPassword); err != nil {
+		return nil
+	}
+	user.SetPassword(newPassword)
+	if err := s.db.Model(user).Update("password", user.Password).Error; err != nil {
+		return err
+	}
+	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"time"
 )
 
 type Model struct {
@@ -45,8 +46,10 @@ func (u *User) CheckPassword(password string) error {
 
 type Role struct {
 	Model
-	UserID uuid.UUID `gorm:"type:uuid;not null;constraint:OnDelete:CASCADE;"`
-	Name   string    `gorm:"not null"`
+	UserID uuid.UUID `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE;"`
+	User   *User
+
+	Name string `gorm:"not null"`
 }
 
 type RefreshToken struct {
@@ -77,5 +80,14 @@ func DecodeRefresh(token string) ([]byte, error) {
 	return m[:], nil
 }
 
-// identities
-type Credential interface{}
+type FlowState struct {
+	Model
+
+	Token  []byte    `gorm:"unique;not null"`
+	UserID uuid.UUID `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE;"`
+	User   *User
+
+	CreatedAt time.Time `gorm:"index"`
+	State     string
+	string
+}

@@ -19,6 +19,7 @@ func setup() error {
 		&model.User{},
 		&model.Role{},
 		&model.RefreshToken{},
+		&model.FlowState{},
 	)
 	if err != nil {
 		return err
