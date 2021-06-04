@@ -1,6 +1,6 @@
-# Hana ID
+# 🌺 Hana ID
 
-Hana ID is a scalable identity provider written in Go.
+Hana ID is a cloud native identity provider written in Go. It currently uses CockroachDB as a backing store.
 
 ## Installation
 
